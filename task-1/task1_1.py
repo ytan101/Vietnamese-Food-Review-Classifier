@@ -1,8 +1,8 @@
-import stanza
-import argparse
-
 from rich import print
 from typing import List
+
+import stanza
+import argparse
 
 
 class AdjectiveProcessor:
@@ -12,9 +12,9 @@ class AdjectiveProcessor:
 
         :param sentence: Sentence to be processed
         """
-        stanza.download("en")
+        # stanza.download("en")
         self.nlp = stanza.Pipeline(
-            lang="en", processors="tokenize,mwt,pos,lemma,depparse"
+            lang="en", processors="tokenize,mwt,pos,lemma,depparse", verbose=False
         )
         self.sentence = sentence
 
@@ -24,7 +24,6 @@ class AdjectiveProcessor:
         and returns a list of all the adjectives found
 
         :return: A list of adjectives
-        :doc-author: Trelent
         """
         adjectives = []
         doc = self.nlp(self.sentence)
@@ -39,13 +38,11 @@ class AdjectiveProcessor:
     def find_triplets(self) -> List[dict]:
         """
         The find_triplets function finds all the triplets in a sentence.
-        It returns a list of dictionaries, where each dictionary contains 
+        It returns a list of dictionaries, where each dictionary contains
         an adjective, noun and dependency relation.
 
         :return: A list of dictionaries
-        :doc-author: Trelent
         """
-
         adjectives = self.find_adjectives()
 
         triplets = []
@@ -56,6 +53,8 @@ class AdjectiveProcessor:
         for sentence in doc.sentences:
             for word in sentence.words:
                 head_word_text = sentence.words[word.head - 1].text
+                # If the word is a noun and the head_word is an adjective, 
+                # add it to the triplet and add it to the nouns list
                 if word.upos == "NOUN" and head_word_text in adjectives:
                     # Append in the form: (adjective, noun, deprel)
                     triplets.append(
@@ -66,7 +65,12 @@ class AdjectiveProcessor:
                         }
                     )
                     nouns.append(word.text)
+                # If not, add the noun to the nouns list for further processing
+                elif word.upos == "NOUN":
+                    nouns.append(word.text)
 
+        # Once the nouns list is populated, check if any adjectives
+        # refer to the nouns as a head_word. Then add it to the triplets
         for sentence in doc.sentences:
             for word in sentence.words:
                 head_word_text = sentence.words[word.head - 1].text
