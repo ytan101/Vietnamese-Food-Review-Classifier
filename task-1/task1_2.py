@@ -60,6 +60,7 @@ if __name__ == "__main__":
         adjective_processor = AdjectiveProcessor(sentence)
         triplets = adjective_processor.find_triplets()
         # Extract all triplets from sentences
+        # If no triplets found, just add the index and sentence
         if len(triplets) == 0:
             triplet_list.append(
                 {
@@ -71,6 +72,7 @@ if __name__ == "__main__":
                 }
             )
             index += 1
+        # If triplets found, add the index and each triplet instance
         else:
             for triplet in triplets:
                 triplet_list.append(
