@@ -1,21 +1,18 @@
 import torch
 
 from datasets import load_dataset
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, DataCollatorWithPadding, AdamW, get_scheduler
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, DataCollatorWithPadding, get_scheduler
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 class SentimentClassifier:
     def __init__(self, dataset, batch_size, truncation_length, num_epochs=1):
         checkpoint = "trituenhantaoio/bert-base-vietnamese-uncased"
-        tokenizer = AutoTokenizer.from_pretrained(checkpoint)
+        self.tokenizer = AutoTokenizer.from_pretrained(checkpoint)
+        self.truncation_length = truncation_length
 
-        def tokenize_function(example):
-            # truncation_length = 512
-            return tokenizer(example["Review"], truncation=True, max_length=truncation_length)
-
-        tokenized_datasets = dataset.map(tokenize_function, batched=True)
-        data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
+        tokenized_datasets = dataset.map(self.tokenize_function, batched=True)
+        data_collator = DataCollatorWithPadding(tokenizer=self.tokenizer)
 
         # Drop unused columns
         tokenized_datasets = tokenized_datasets.remove_columns(['Rate', 'Review', 'Index'])
@@ -38,10 +35,13 @@ class SentimentClassifier:
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         self.model = AutoModelForSequenceClassification.from_pretrained(checkpoint, num_labels=3)
         self.model.to(self.device)
+
+    def tokenize_function(self, example):
+        # truncation_length = 512
+        return self.tokenizer(example["Review"], truncation=True, max_length=self.truncation_length)
         
-    
     def optimizer(self):
-        return AdamW(self.model.parameters(), lr=5e-6)
+        return torch.optim.AdamW(self.model.parameters(), lr=5e-6)
 
     def lr_scheduler(self, optimizer):
         num_training_steps = self.num_epochs*len(self.train_dataloader)
@@ -54,7 +54,7 @@ class SentimentClassifier:
 
         for epoch in range(self.num_epochs):
             print(f"Training Epoch {epoch+1}/{self.num_epochs} ")
-            
+
             # Training Loop
             print("Training...")
             train_accum_loss = 0
@@ -76,7 +76,7 @@ class SentimentClassifier:
                 optimizer.step()
                 lr_scheduler.step()
                 optimizer.zero_grad()
-            
+
             # Evaluation loop
             print("Evaluating...")
             eval_accum_loss = 0
@@ -103,8 +103,29 @@ class SentimentClassifier:
         torch.save({
             'epoch': self.num_epochs,
             'model_state_dict': self.model.state_dict(),
-            'optimizer_state_dict': self.optimizer.state_dict()
+            'optimizer_state_dict': optimizer.state_dict()
         }, "model.pt")
+
+    def testing_loop(self):
+        print("Testing...")
+        test_accum_loss = 0
+        self.model.eval()
+        test_preds_list = []
+        test_labels_list = []
+        for batch in tqdm(self.test_dataloader, position=0, leave=True):
+            batch = {k: v.to(self.device) for k, v in batch.items()}
+            with torch.no_grad():
+                outputs = self.model(**batch)
+                loss = outputs.loss
+                test_accum_loss += loss
+
+            logits = outputs.logits
+            predictions = torch.argmax(logits, dim=-1)
+            test_preds_list.extend(predictions)
+            test_labels_list.extend(batch["labels"])
+
+        # Test metrics
+        self.model_metrics(test_preds_list, test_labels_list, test_accum_loss, len(self.test_dataloader), "Test")
 
     def model_metrics(self, preds_list, labels_list, accum_loss, dataloader_length, current_stage):
         accuracy = self.get_accuracy(preds_list, labels_list)
@@ -118,3 +139,27 @@ class SentimentClassifier:
         
     def get_loss(self, accum_loss, dataloader_length):
         return accum_loss/dataloader_length
+
+    def inference_loop(self, checkpoint_path, text_input):
+        # Load model dict
+        print("Replacing weights with checkpoints for inferencing")
+        checkpoint = torch.load(checkpoint_path)
+        self.model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer = self.optimizer()
+        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+
+        # Parse text_input
+        # TODO: Clean text input as well
+        tokenized_input = self.tokenize_function(text_input)
+        for key in tokenized_input:
+            tokenized_input[key] = torch.tensor(tokenized_input[key]).to(self.device)
+        
+        # Do predictions
+        output = self.model(**tokenized_input)
+        logits = output.logits
+        prediction = torch.argmax(logits, dim=-1)
+        print(self.get_sentiment(prediction.item()))
+
+    def get_sentiment(self, prediction):
+        sentiment_dict = {0: "Negative", 1: "Neutral", 2: "Positive"}
+        return sentiment_dict[prediction]
