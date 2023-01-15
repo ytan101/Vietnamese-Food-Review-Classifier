@@ -12,7 +12,7 @@ from tqdm import tqdm
 from rich import print
 
 
-class SentimentClassifier:
+class SentimentClassifierModel:
     def __init__(self, dataset, mode, batch_size, truncation_length, num_epochs=1):
         checkpoint = "trituenhantaoio/bert-base-vietnamese-uncased"
         self.tokenizer = AutoTokenizer.from_pretrained(checkpoint)
@@ -217,7 +217,7 @@ class SentimentClassifier:
         output = self.model(**tokenized_input)
         logits = output.logits
         prediction = torch.argmax(logits, dim=-1)
-        print(f"[magenta]{self.get_sentiment(prediction.item())}[/magenta]")
+        return self.get_sentiment(prediction.item())
 
     def get_sentiment(self, prediction):
         sentiment_dict = {0: "Negative", 1: "Neutral", 2: "Positive"}

@@ -1,11 +1,43 @@
 import os
 import argparse
 
-from data_cleaning import DataCleaning
-from data_processing import DataProcessing
-from model import SentimentClassifier
+from src.data_cleaning import DataCleaning
+from src.data_processing import DataProcessing
+from src.model import SentimentClassifierModel
 
-# import argparse if need to choose between train, test, eval (and also for own input)
+
+class SentimentClassifier:
+    def __init__(self, mode, model_path, text):
+        self.model_path = model_path
+        self.mode = mode
+        self.text = text
+
+        # Process the data
+        self.data_processing = DataProcessing()
+        reviews_dataset = self.data_processing.process_data()
+
+        # Modelling
+        self.model = SentimentClassifierModel(
+            dataset=reviews_dataset,
+            mode=self.mode,
+            batch_size=8,
+            truncation_length=512,
+            num_epochs=2,
+        )
+
+    def train(self):
+        self.model.training_loop()
+        self.model.testing_loop()
+
+    def infer(self):
+        print("printing text")
+        processed_text_input = self.data_processing.process_single(self.text)
+        print(processed_text_input)
+        text_input_dict = {"Review": [processed_text_input]}
+        prediction = self.model.inference_loop(self.model_path, text_input_dict)
+        print(prediction)
+        return prediction
+
 
 if __name__ == "__main__":
     # If clean_data doesn't exist, run data_cleaning
@@ -28,35 +60,18 @@ if __name__ == "__main__":
         help="model path, models located in ./data/raw",
         default="../data/models/model_2023-01-15_01-15-00.pt",
     )
+    default_text = "Please key in your text"
+    parser.add_argument(
+        "--text", type=str, help="Text to be analyzed", default=default_text
+    )
     args = parser.parse_args()
 
-    # Process the data
-    data_processing = DataProcessing()
-    reviews_dataset = data_processing.process_data()
-
-    # Modelling
-    model = SentimentClassifier(
-        dataset=reviews_dataset,
-        mode=args.mode,
-        batch_size=8,
-        truncation_length=512,
-        num_epochs=2,
+    sentiment_classifier = SentimentClassifier(
+        mode=args.mode, model_path=args.model_path, text=args.text
     )
 
     if args.mode == "train":
-        model.training_loop()
-        model.testing_loop()
+        sentiment_classifier.train()
 
     if args.mode == "infer":
-        text_input = """
-                        Khu ẩm thực với đa dạng đồ lại còn bày trí đẹp nên là rất hấp dẫn đối với
-                        những đứa cuồng ăn uống như mình Đồ ăn giá cả phải không quá Tuy nhiên về 
-                        chất lượng thì chưa thật sự ấn tượng Mình thấy ổn thôi chứ chưa thực sự có 
-                        vài món để ngoài lâu nên bị nguội ăn không ngon Kem trà xanh dù nhưng mình 
-                        ăn thấy vị cũng bình bánh ngọt chỉ có nhân viên thu không có nhân viên giám 
-                        tự mình lấy bánh xong rồi mang qua thanh Đúng kiểu đề cao sự tự giác và trung 
-                        thực của người Nhật thích điểm
-                     """
-        processed_text_input = data_processing.process_single(text_input)
-        text_input_dict = {"Review": [processed_text_input]}
-        model.inference_loop(args.model_path, text_input_dict)
+        sentiment_classifier.infer()
