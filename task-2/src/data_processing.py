@@ -21,6 +21,12 @@ class DataProcessing:
 
         # Split into train, val, test
         return self.split_train_val_test(reviews_dataset)
+
+    def process_single(self, text):
+        # Apply lowercasing
+        text = text.lower()
+        text = self.remove_vn_stopwords(text)
+        return text
     
     def remove_vn_stopwords(self, text: str):
         vn_stopwords_file = open("../data/vietnamese-stopwords.txt", encoding="utf8")
