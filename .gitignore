@@ -12,3 +12,6 @@ task-2/notebooks/mlruns/
 
 # Ignore vscode settings
 **/*.vscode
+
+# Ignore Mac file
+**/*.DS_Store
