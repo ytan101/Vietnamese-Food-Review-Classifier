@@ -1,3 +1,14 @@
+# Ignore lightning logs output
 task-2/notebooks/sst-trainer/
 task-2/notebooks/lightning_logs/
 task-2/notebooks/mlruns/
+
+# Ignore model .pt files
+**/*.pt
+
+# Ignore cache files
+**/*.pyc
+**/*.ipynb_checkpoints
+
+# Ignore vscode settings
+**/*.vscode
