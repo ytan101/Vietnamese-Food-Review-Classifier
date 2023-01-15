@@ -3,32 +3,35 @@ import torch
 from datasets import load_dataset
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, DataCollatorWithPadding, get_scheduler
 from torch.utils.data import DataLoader
+from datetime import datetime
 from tqdm import tqdm
+from rich import print
 
 class SentimentClassifier:
-    def __init__(self, dataset, batch_size, truncation_length, num_epochs=1):
+    def __init__(self, dataset, mode, batch_size, truncation_length, num_epochs=1):
         checkpoint = "trituenhantaoio/bert-base-vietnamese-uncased"
         self.tokenizer = AutoTokenizer.from_pretrained(checkpoint)
         self.truncation_length = truncation_length
 
-        tokenized_datasets = dataset.map(self.tokenize_function, batched=True)
-        data_collator = DataCollatorWithPadding(tokenizer=self.tokenizer)
+        if mode == "train":
+            tokenized_datasets = dataset.map(self.tokenize_function, batched=True)
+            data_collator = DataCollatorWithPadding(tokenizer=self.tokenizer)
 
-        # Drop unused columns
-        tokenized_datasets = tokenized_datasets.remove_columns(['Rate', 'Review', 'Index'])
-        # Rename label column
-        tokenized_datasets = tokenized_datasets.rename_column('Label', 'label')
+            # Drop unused columns
+            tokenized_datasets = tokenized_datasets.remove_columns(['Rate', 'Review', 'Index'])
+            # Rename label column
+            tokenized_datasets = tokenized_datasets.rename_column('Label', 'label')
 
-        # Load the dataset into separate splits
-        self.train_dataloader = DataLoader(
-            tokenized_datasets["train"], shuffle=True, batch_size=batch_size, collate_fn=data_collator
-        )
-        self.eval_dataloader = DataLoader(
-            tokenized_datasets["validation"], batch_size = batch_size, collate_fn = data_collator
-        )
-        self.test_dataloader = DataLoader(
-            tokenized_datasets["test"], batch_size = batch_size, collate_fn = data_collator
-        )
+            # Load the dataset into separate splits
+            self.train_dataloader = DataLoader(
+                tokenized_datasets["train"], shuffle=True, batch_size=batch_size, collate_fn=data_collator
+            )
+            self.eval_dataloader = DataLoader(
+                tokenized_datasets["validation"], batch_size = batch_size, collate_fn = data_collator
+            )
+            self.test_dataloader = DataLoader(
+                tokenized_datasets["test"], batch_size = batch_size, collate_fn = data_collator
+            )
 
         self.num_epochs = num_epochs
 
@@ -48,6 +51,7 @@ class SentimentClassifier:
         return get_scheduler("linear", optimizer, num_warmup_steps=0, num_training_steps=num_training_steps)
 
     def training_loop(self):
+        # TODO: Early stop if loss is not decreasing after a few epochs
 
         optimizer = self.optimizer()
         lr_scheduler = self.lr_scheduler(optimizer)
@@ -100,13 +104,19 @@ class SentimentClassifier:
             # Eval metrics
             self.model_metrics(eval_preds_list, eval_labels_list, eval_accum_loss, len(self.eval_dataloader), "Evaluation")
 
+        now = datetime.now()
+        timestamp = now.strftime("%Y-%m-%d_%H-%M-%S")
+        model_output_file_str = f"../data/models/model_{timestamp}.pt"
+        print(f"Saving model to {model_output_file_str}")
+
         torch.save({
             'epoch': self.num_epochs,
             'model_state_dict': self.model.state_dict(),
             'optimizer_state_dict': optimizer.state_dict()
-        }, "model.pt")
+        }, model_output_file_str)
 
     def testing_loop(self):
+        # TODO: Separate from training, and test any checkpoints 
         print("Testing...")
         test_accum_loss = 0
         self.model.eval()
@@ -142,14 +152,13 @@ class SentimentClassifier:
 
     def inference_loop(self, checkpoint_path, text_input):
         # Load model dict
-        print("Replacing weights with checkpoints for inferencing")
+        print(f"Replacing weights with model at {checkpoint_path}")
         checkpoint = torch.load(checkpoint_path)
         self.model.load_state_dict(checkpoint['model_state_dict'])
         optimizer = self.optimizer()
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
 
         # Parse text_input
-        # TODO: Clean text input as well
         tokenized_input = self.tokenize_function(text_input)
         for key in tokenized_input:
             tokenized_input[key] = torch.tensor(tokenized_input[key]).to(self.device)
@@ -158,7 +167,7 @@ class SentimentClassifier:
         output = self.model(**tokenized_input)
         logits = output.logits
         prediction = torch.argmax(logits, dim=-1)
-        print(self.get_sentiment(prediction.item()))
+        print(f"[magenta]{self.get_sentiment(prediction.item())}[/magenta]")
 
     def get_sentiment(self, prediction):
         sentiment_dict = {0: "Negative", 1: "Neutral", 2: "Positive"}
