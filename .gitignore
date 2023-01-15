@@ -15,3 +15,6 @@ task-2/notebooks/mlruns/
 
 # Ignore Mac file
 **/*.DS_Store
+
+# Ignore node_module
+**/node_modules
