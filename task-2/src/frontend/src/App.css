@@ -2,37 +2,67 @@
   text-align: center;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.App::before {
+  content: "";
+  background-image: url("../public/background.jpg");
+  background-size: cover;
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  bottom: 0px;
+  left: 0px;
+  opacity: 0.65;
 }
 
 .App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+  background: linear-gradient(
+    to bottom,
+    rgb(206, 85, 5, 0.5),
+    rgba(255, 255, 255, 0)
+  );
+  position: relative;
+  min-height: 10vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: calc(10px + 2vmin);
-  color: white;
+  color: rgb(45, 0, 0);
+}
+
+.App-body {
+  opacity: 0.95;
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 80vh;
+  font-size: calc(8px + 2vmin);
+  color: rgb(19, 19, 19);
+}
+
+.header-text {
+  opacity: 0.85;
+}
+
+.border {
+  background-color: rgb(187, 140, 83);
+  border-radius: 10px;
 }
 
 .App-link {
   color: #61dafb;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.positive-message {
+  color: green;
+}
+
+.neutral-message {
+  color: rgb(109, 109, 109);
+}
+
+.negative-message {
+  color: red;
 }

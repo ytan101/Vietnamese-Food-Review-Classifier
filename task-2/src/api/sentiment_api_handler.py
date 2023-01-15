@@ -7,16 +7,13 @@ from src.main import SentimentClassifier
 
 class SentimentApiHandler(Resource):
     def get(self):
-        return {"resultStatus": "SUCCESS", "message": "Get request success"}
+        return {"resultStatus": "SUCCESS", "message": "Connected to Flask backend"}
 
     def post(self):
         parser = reqparse.RequestParser()
         parser.add_argument("message", type=str)
         args = parser.parse_args()
         text = args["message"]
-
-        print("My text is:")
-        print(text)
 
         sentiment_classifier = SentimentClassifier(
             mode="infer",

@@ -220,5 +220,5 @@ class SentimentClassifierModel:
         return self.get_sentiment(prediction.item())
 
     def get_sentiment(self, prediction):
-        sentiment_dict = {0: "Negative", 1: "Neutral", 2: "Positive"}
+        sentiment_dict = {0: "negative", 1: "neutral", 2: "positive"}
         return sentiment_dict[prediction]
