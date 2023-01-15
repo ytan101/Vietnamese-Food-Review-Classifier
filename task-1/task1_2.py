@@ -88,4 +88,4 @@ if __name__ == "__main__":
 
     # Populate in excel
     triplet_df = pd.DataFrame(triplet_list)
-    triplet_df.to_excel('triplets.xlsx', index=False)
+    triplet_df.to_excel("triplets.xlsx", index=False)

@@ -53,7 +53,7 @@ class AdjectiveProcessor:
         for sentence in doc.sentences:
             for word in sentence.words:
                 head_word_text = sentence.words[word.head - 1].text
-                # If the word is a noun and the head_word is an adjective, 
+                # If the word is a noun and the head_word is an adjective,
                 # add it to the triplet and add it to the nouns list
                 if word.upos == "NOUN" and head_word_text in adjectives:
                     # Append in the form: (adjective, noun, deprel)
