@@ -4,7 +4,6 @@ import argparse
 from data_cleaning import DataCleaning
 from data_processing import DataProcessing
 from model import SentimentClassifier
-from rich import print
 
 # import argparse if need to choose between train, test, eval (and also for own input)
 
