@@ -3,10 +3,11 @@ import os
 
 
 class DataCleaning:
-    def __init__(self):
-        positive_file_path = "../data/raw/positive_data.csv"
-        negative_file_path = "../data/raw/negative_data.csv"
-        neutral_file_path = "../data/raw/neural_data.csv"
+    def __init__(self, current_directory):
+        self.current_directory = current_directory
+        positive_file_path = f"{self.current_directory}/data/raw/positive_data.csv"
+        negative_file_path = f"{self.current_directory}/data/raw/negative_data.csv"
+        neutral_file_path = f"{self.current_directory}/data/raw/neural_data.csv"
         files = [positive_file_path, negative_file_path, neutral_file_path]
         self.combined_reviews_df = pd.concat([pd.read_csv(file) for file in files])
 
@@ -32,5 +33,5 @@ class DataCleaning:
         )
 
         # Export cleaned data
-        os.makedirs("../data/cleaned", exist_ok=True)
-        self.combined_reviews_df.to_csv("../data/cleaned/cleaned_data.csv")
+        os.makedirs(f"{self.current_directory}/data/cleaned", exist_ok=True)
+        self.combined_reviews_df.to_csv(f"{self.current_directory}/data/cleaned/cleaned_data.csv")

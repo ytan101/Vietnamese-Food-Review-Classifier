@@ -13,7 +13,10 @@ from rich import print
 
 
 class SentimentClassifierModel:
-    def __init__(self, dataset, mode, batch_size, truncation_length, num_epochs=1):
+    def __init__(self, current_directory, dataset, mode, batch_size, truncation_length, num_epochs=1):
+        
+        self.current_directory = current_directory
+
         checkpoint = "trituenhantaoio/bert-base-vietnamese-uncased"
         self.tokenizer = AutoTokenizer.from_pretrained(checkpoint)
         self.truncation_length = truncation_length
@@ -143,7 +146,7 @@ class SentimentClassifierModel:
 
         now = datetime.now()
         timestamp = now.strftime("%Y-%m-%d_%H-%M-%S")
-        model_output_file_str = f"../data/models/model_{timestamp}.pt"
+        model_output_file_str = f"{self.current_directory}/data/models/model_{timestamp}.pt"
         print(f"Saving model to {model_output_file_str}")
 
         torch.save(

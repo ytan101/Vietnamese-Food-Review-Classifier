@@ -7,22 +7,23 @@ from src.model import SentimentClassifierModel
 
 
 class SentimentClassifier:
-    def __init__(self, mode, model_path, text):
+    def __init__(self, mode, model_path, text, current_directory, num_epochs=5):
         self.model_path = model_path
         self.mode = mode
         self.text = text
 
         # Process the data
-        self.data_processing = DataProcessing()
+        self.data_processing = DataProcessing(current_directory=current_directory)
         reviews_dataset = self.data_processing.process_data()
 
         # Modelling
         self.model = SentimentClassifierModel(
             dataset=reviews_dataset,
+            current_directory=current_directory,
             mode=self.mode,
             batch_size=8,
             truncation_length=512,
-            num_epochs=2,
+            num_epochs=num_epochs,
         )
 
     def train(self):
@@ -40,8 +41,11 @@ class SentimentClassifier:
 
 
 if __name__ == "__main__":
+
+    current_directory = os.getcwd()
+
     # If clean_data doesn't exist, run data_cleaning
-    if not os.path.exists("../data/cleaned/cleaned_data.csv"):
+    if not os.path.exists(f"{current_directory}/data/cleaned/cleaned_data.csv"):
         data_cleaning = DataCleaning()
         data_cleaning.clean_data()
 
@@ -58,7 +62,13 @@ if __name__ == "__main__":
         "--model_path",
         type=str,
         help="model path, models located in ./data/raw",
-        default="../data/models/model_2023-01-15_01-15-00.pt",
+        default=f"{current_directory}/data/models/model_2023-01-15_01-15-00.pt",
+    )
+    parser.add_argument(
+        "--num_epochs",
+        type=int,
+        help="number of epochs to train the model for",
+        default=5,
     )
     default_text = "Please key in your text"
     parser.add_argument(
@@ -67,7 +77,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     sentiment_classifier = SentimentClassifier(
-        mode=args.mode, model_path=args.model_path, text=args.text
+        mode=args.mode, current_directory=current_directory, model_path=args.model_path, text=args.text, num_epochs=args.num_epochs
     )
 
     if args.mode == "train":
