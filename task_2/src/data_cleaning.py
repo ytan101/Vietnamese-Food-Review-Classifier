@@ -12,6 +12,12 @@ class DataCleaning:
         self.combined_reviews_df = pd.concat([pd.read_csv(file) for file in files])
 
     def clean_data(self):
+        """
+        The clean_data function removes NaN columns and resets the index column. 
+        It also fixes column typings, renames labels so they start from 0, and exports cleaned data to a csv file.
+
+        :return: The cleaned dataframe
+        """
         # Remove NaN columns
         self.combined_reviews_df = self.combined_reviews_df.dropna()
 
@@ -34,4 +40,6 @@ class DataCleaning:
 
         # Export cleaned data
         os.makedirs(f"{self.current_directory}/data/cleaned", exist_ok=True)
-        self.combined_reviews_df.to_csv(f"{self.current_directory}/data/cleaned/cleaned_data.csv")
+        self.combined_reviews_df.to_csv(
+            f"{self.current_directory}/data/cleaned/cleaned_data.csv"
+        )

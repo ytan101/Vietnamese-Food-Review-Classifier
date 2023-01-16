@@ -27,10 +27,24 @@ class SentimentClassifier:
         )
 
     def train(self):
+        """
+        The train function is the main function that runs the training loop. 
+        It calls other functions to get data, create a model, load a checkpoint
+        if necessary, train for an epoch and report progress. 
+        The only parameters passed to this function are those that can be set by flags in our CLI.
+        
+        """
         self.model.training_loop()
         self.model.testing_loop()
 
     def infer(self):
+        """
+        The infer function takes a text string and returns the predicted sentiment.
+        The input is processed, tokenized, and fed into the model for inference.
+        The output is then returned to the user
+        
+        :return: A dictionary with the following keys:
+        """
         print("printing text")
         processed_text_input = self.data_processing.process_single(self.text)
         print(processed_text_input)

@@ -61,15 +61,32 @@ class SentimentClassifierModel:
         self.model.to(self.device)
 
     def tokenize_function(self, example):
-        # truncation_length = 512
+        """
+        The tokenize_function function is a helper function that takes in an example and returns the tokenized version of it.
+        It does this by calling the tokenizer on the Review field of the example, passing in truncation=True and 
+        max_length=self.truncation_length as arguments to make sure that we don't pass anything unexpected into BERT.
+        
+        :param example: Get the review from the dataset
+        :return: A dictionary with the key being &quot;review&quot; and the value being a list of tokens
+        """
         return self.tokenizer(
             example["Review"], truncation=True, max_length=self.truncation_length
         )
 
     def optimizer(self):
+        """
+        Use Adam with Decouple Weight Decay Regularization
+
+        :return: Torch AdamW optimizer
+        """
         return torch.optim.AdamW(self.model.parameters(), lr=5e-6)
 
     def lr_scheduler(self, optimizer):
+        """
+        Defines the learning rate scheduler
+
+        :param optimizer: The optimizer object to apply the learning rate scheduling on
+        """
         num_training_steps = self.num_epochs * len(self.train_dataloader)
         return get_scheduler(
             "linear",
@@ -79,6 +96,12 @@ class SentimentClassifierModel:
         )
 
     def training_loop(self):
+        """
+        The training loop performs training on the training dataset and then evaluation on the eval dataset
+        for each epoch. After all the epochs are ran, it saves the model into the data/models folder.
+
+        For each epoch, the accuracy and loss of each train and evaluation loop is also printed
+        """
         # TODO: Early stop if loss is not decreasing after a few epochs
 
         optimizer = self.optimizer()
@@ -159,6 +182,15 @@ class SentimentClassifierModel:
         )
 
     def testing_loop(self):
+        """
+        The testing_loop function is used to test the model on a dataset.
+        It takes in as arguments:
+            - self (the object being created)
+            - test_dataloader (a dataloader that iterates over the testing set)
+
+        It prints out metrics about how well the model performed after the 
+        training loop
+        """
         # TODO: Separate from training, and test any checkpoints
         print("Testing...")
         test_accum_loss = 0
@@ -189,11 +221,35 @@ class SentimentClassifierModel:
     def model_metrics(
         self, preds_list, labels_list, accum_loss, dataloader_length, current_stage
     ):
+        """
+        The model_metrics function is used to calculate the accuracy and loss of a model's predictions.
+        It takes in a list of predicted labels, a list of true labels, the accumulated loss for all batches in 
+        the dataloader, and the length (number of batches) in the dataloader. The function returns nothing; it 
+        just prints out accuracy and loss.
+        
+        :param preds_list: List of all predictions from model
+        :param labels_list: List of all ground truths from the dataset
+        :param accum_loss: Accumulate the loss over all of the batches in a given epoch
+        :param dataloader_length: Calculate the average loss
+        :param current_stage: Determine which stage of training we are in
+        :return: The accuracy and loss of the model
+        """
         accuracy = self.get_accuracy(preds_list, labels_list)
         loss = self.get_loss(accum_loss, dataloader_length)
         print(f"{current_stage} accuracy: {accuracy}, {current_stage} loss: {loss}")
 
     def get_accuracy(self, preds_list, labels_list):
+        """
+        The get_accuracy function takes in two lists of predictions and labels, 
+        and returns the accuracy of the model. The accuracy is calculated by taking 
+        the sum of correct predictions (predictions that match labels) and dividing it 
+        by the total number of examples. This function will be used to calculate the 
+        accuracy on both train and test data.
+        
+        :param preds_list: Store the predictions made by the model
+        :param labels_list: Get the actual labels of each image
+        :return: The accuracy of the model
+        """
         matches = sum(
             1 for pred, label in zip(preds_list, labels_list) if pred == label
         )
@@ -201,9 +257,27 @@ class SentimentClassifierModel:
         return accuracy
 
     def get_loss(self, accum_loss, dataloader_length):
+        """
+        The get_loss function is a helper function that calculates the average loss over all batches in the dataloader.
+        It returns this average loss as a floating point number.
+        
+        
+        :param accum_loss: Accumulate the loss over all batches
+        :param dataloader_length: Normalize the loss
+        :return: The average loss over the length of the dataloader
+        """
         return accum_loss / dataloader_length
 
     def inference_loop(self, checkpoint_path, text_input):
+        """
+        The inference_loop function takes a checkpoint path and text input, 
+        and returns the sentiment of that text.
+        
+        
+        :param checkpoint_path: Load the model weights from a checkpoint file
+        :param text_input: Pass the text that we want to get a sentiment for
+        :return: The sentiment of the text_input
+        """
         # Load model dict
         print(f"Replacing weights with model at {checkpoint_path}")
         checkpoint = torch.load(checkpoint_path)
@@ -223,5 +297,13 @@ class SentimentClassifierModel:
         return self.get_sentiment(prediction.item())
 
     def get_sentiment(self, prediction):
+        """
+        The get_sentiment function takes a prediction from the model and returns 
+        the associated sentiment. The dictionary is used to map the numeric value of 
+        each sentiment to its string representation.
+        
+        :param prediction: Get the sentiment of the text
+        :return: The sentiment of the tweet, which is either "negative", "neutral" or "positive"
+        """
         sentiment_dict = {0: "negative", 1: "neutral", 2: "positive"}
         return sentiment_dict[prediction]

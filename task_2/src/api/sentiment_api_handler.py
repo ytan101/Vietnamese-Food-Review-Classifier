@@ -6,9 +6,21 @@ from src.main import SentimentClassifier
 
 class SentimentApiHandler(Resource):
     def get(self):
+        """
+        The get function returns a JSON object with the message "Connected to Flask backend";
+        
+        :return: If connection succeeds, return a SUCCESS status and related message;
+        """
         return {"resultStatus": "SUCCESS", "message": "Connected to Flask backend"}
 
     def post(self):
+        """
+        The post function is used to classify the sentiment of a given text.
+        The function takes in a string as an argument and returns the predicted 
+        sentiment of that string.
+        
+        :return: The sentiment of the message passed as an argument
+        """
         parser = reqparse.RequestParser()
         parser.add_argument("message", type=str)
         args = parser.parse_args()
