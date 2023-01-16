@@ -76,7 +76,7 @@ if __name__ == "__main__":
         "--model_path",
         type=str,
         help="model path, models located in ./data/raw",
-        default=f"{current_directory}/data/models/model_2023-01-15_01-15-00.pt",
+        default=f"{current_directory}\data\models\model_2023-01-16_11-11-54.pt",
     )
     parser.add_argument(
         "--num_epochs",
