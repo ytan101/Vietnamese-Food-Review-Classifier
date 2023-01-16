@@ -4,6 +4,7 @@ import argparse
 from src.data_cleaning import DataCleaning
 from src.data_processing import DataProcessing
 from src.model import SentimentClassifierModel
+from rich import print
 
 
 class SentimentClassifier:
@@ -45,12 +46,10 @@ class SentimentClassifier:
         
         :return: A dictionary with the following keys:
         """
-        print("printing text")
         processed_text_input = self.data_processing.process_single(self.text)
-        print(processed_text_input)
         text_input_dict = {"Review": [processed_text_input]}
         prediction = self.model.inference_loop(self.model_path, text_input_dict)
-        print(prediction)
+        print(f"[cyan]You're feeling[/cyan] [magenta]{prediction}[/magenta] [cyan]about what you ate[/cyan]")
         return prediction
 
 
