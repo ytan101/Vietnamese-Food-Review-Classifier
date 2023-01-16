@@ -1,0 +1,99 @@
+ARG BASE_IMAGE=nvidia/cuda:11.3.0-cudnn8-devel-ubuntu20.04
+FROM $BASE_IMAGE AS builder
+
+ARG CONDA_ENV_FILE="conda.yml"
+ARG CONDA_ENV_NAME="nlp"
+ARG PROJECT_USER="nlp"
+ARG HOME_DIR="/app"
+ARG UID=2222
+ARG GID=2222
+
+WORKDIR ${HOME_DIR}
+
+# miniconda arguments
+ARG CONDA_HOME="/miniconda3"
+ARG CONDA_BIN="${CONDA_HOME}/bin/conda"
+ARG MINI_CONDA_SH="Miniconda3-latest-Linux-x86_64.sh"
+
+# base utilities
+RUN apt-get update && apt-get -y upgrade && \
+    apt-get install -y curl git wget sudo && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# set shell to bash
+SHELL ["/bin/bash", "-c"]
+
+# add project user
+RUN groupadd -f -g ${GID} ${PROJECT_USER} && \
+    useradd -d ${HOME_DIR} -s /bin/bash -g ${GID} -u ${UID} ${PROJECT_USER}
+
+COPY . .
+
+RUN mkdir -p ${HOME} && \
+    chown -R ${PROJECT_USER}:users ${HOME} && \
+    chown -R ${PROJECT_USER}:users /usr/local/bin
+
+RUN mkdir ${CONDA_HOME} && chown -R 2222:2222 ${CONDA_HOME}
+RUN chown -R 2222:2222 ${HOME_DIR} && \
+    rm /bin/sh && ln -s /bin/bash /bin/sh
+
+ENV PYTHONIOENCODING utf8
+ENV LANG "C.UTF-8"
+ENV LC_ALL "C.UTF-8"
+ENV NVIDIA_VISIBLE_DEVICES all
+ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
+ENV LD_LIBRARY_PATH /usr/local/cuda/lib64:$LD_LIBRARY_PATH
+ENV PATH /usr/local/cuda-11.3/bin:$PATH
+
+USER ${PROJECT_USER}
+
+# install miniconda
+RUN curl -O https://repo.anaconda.com/miniconda/${MINI_CONDA_SH} && \
+    chmod +x ${MINI_CONDA_SH} && \
+    ./${MINI_CONDA_SH} -u -b -p ${CONDA_HOME} && \
+    rm ${MINI_CONDA_SH}
+ENV PATH ${CONDA_HOME}/bin:${HOME_DIR}/.local/bin:${PATH}
+
+# install pytorch
+RUN ${CONDA_BIN} env create -f ${CONDA_ENV_FILE} && \
+    ${CONDA_BIN} init bash && \
+    ${CONDA_BIN} clean -a -y && \
+    echo "conda activate ${CONDA_ENV_NAME}" >> ~/.bashrc && \
+    source ~/.bashrc && \
+    conda install -y pytorch==1.12.0 torchvision==0.13.0 torchaudio==0.12.0 cudatoolkit=11.3 -c pytorch
+
+FROM builder AS base
+ARG TORCH_CUDA_ARCH_LIST="7.0+PTX"
+
+# activate the backend server
+RUN source ~/.bashrc && \ 
+    cd src && \
+    flask run --no-reload
+
+
+
+
+# # Use an official Python runtime as the base image
+# FROM python:3.9.16-alpine3.17
+
+# # Set the working directory
+# WORKDIR /app
+
+# # Copy requirements.txt
+# COPY requirements_backend.txt /app/requirements.txt
+
+# # Install dependencies
+# RUN pip install -r requirements.txt
+
+# # Copy the rest of the application code
+# COPY . .
+
+# # Set the FLASK_APP environment variable
+# ENV FLASK_APP app.py
+
+# # Go to the app.py file
+# WORKDIR /app/src
+
+# # Run the Flask development server
+# CMD ["flask", "run", "--host=0.0.0.0"]
