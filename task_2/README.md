@@ -43,6 +43,19 @@ Then, key in any food review text in Vietnamese. This calls the inference servic
 ![Inference Example](images/inference_example.png "Inference Example")
 
 # Using Docker
+### Frontend
+- To start the frontend as a docker container:
+    - `cd src/frontend`
+    - `docker build -f Dockerfile.frontend -t sentiment-fe .`
+    - Once building is done, `docker run -p 3000:3000 sentiment-fe`
+    - Go to localhost:3000 to see the site
+
+### Backend
+- To start the backend as a docker container:
+    - `docker build -f Dockerfile.backend -t sentiment-be .` (Do note that you need a CUDA enabled device to build the image)
+    - Once building is done, `docker run --gpus 1 -p 5000:5000 sentiment-be` 
+    - Do note that if you are running the container for the first time, it takes some time to download the models
+    - Refresh the frontend and you should see the message "Connected to Flask backend"
 
 # Flask advantages and disadvantages
 ### Advantages:
