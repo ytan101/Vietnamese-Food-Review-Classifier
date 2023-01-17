@@ -36,7 +36,7 @@ class SentimentApiHandler(Resource):
         sentiment_classifier = SentimentClassifier(
             mode="infer",
             current_directory=current_directory,
-            model_path=f"{current_directory}\data\models\model_2023-01-16_11-11-54.pt",
+            model_path=f"{current_directory}/data/models/model_2023-01-16_11-11-54.pt",
             text=text,
         )
         prediction = sentiment_classifier.infer()
