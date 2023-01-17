@@ -45,6 +45,7 @@ Then, key in any food review text in Vietnamese. This calls the inference servic
 # Using Docker
 ### Frontend
 - To start the frontend as a docker container:
+    - Start a new terminal
     - `cd src/frontend`
     - `docker build -f Dockerfile.frontend -t sentiment-fe .`
     - Once building is done, `docker run -p 3000:3000 sentiment-fe`
@@ -52,17 +53,22 @@ Then, key in any food review text in Vietnamese. This calls the inference servic
 
 ### Backend
 - To start the backend as a docker container:
+    - Start a new terminal
     - `docker build -f Dockerfile.backend -t sentiment-be .` (Do note that you need a CUDA enabled device to build the image)
     - Once building is done, `docker run --gpus 1 -p 5000:5000 sentiment-be` 
     - Do note that if you are running the container for the first time, it takes some time to download the models
     - Refresh the frontend and you should see the message "Connected to Flask backend"
 
+# Loading or changing the model
+- The current best performing model is here: https://drive.google.com/file/d/1mDJ6t6x7MEqwTj9OJjuOpjQsuzb7ChOY/view?usp=sharing
+- To load the model, navigate to `data/models` and paste the model in this folder
+- To change the model used in the webapp inferencing, navigate to `src/api/sentiment_api_handler.py` and change the model path in line 39
+
 # Flask advantages and disadvantages
 ### Advantages:
-- Flask is relatively straight forward to use, and defining API calls is straightforward.
 - It is a micro framework, hence contains lesser abstractions, making it faster
 - Good for small scale applications
 
 ### Disadvantages:
 - No UI to test out API calls unlike FastAPI (which is a full-stack framework)
-- May not have as much features as other existing libraries like Django
+- May not have as much features as other existing libraries like Django (manually write out to achieve same funcitonality)
