@@ -39,7 +39,7 @@ Inference example:
 Upon success, you should see a webpage like this:
 ![Landing Page](images/landing_page.png "Landing Page")
 
-Then, key in any food review text in Vietnamese. This calls the inference service in Flask. If your review is positive, you should see something like this:
+Then, key in any food review text in Vietnamese. This calls the inference service in Flask. If your review is positive, you should see the below:
 ![Inference Example](images/inference_example.png "Inference Example")
 
 # Using Docker
